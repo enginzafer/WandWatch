@@ -11,7 +11,7 @@ import SwiftUI
 struct WandWatchApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
     }
 }
