@@ -54,6 +54,87 @@ class APIServices {
             throw APIError.decodingError
         }
     }
+    
+    
+    func fetchWatchProviders(id: Int, mediaType: String) async throws -> ([Provider], String?) {
+        //EndPoint: /movie/{id}/watch/providers
+        let urlString = "\(APIConstants.baseURL)/\(mediaType)/\(id)/watch/providers?api_key=\(APIConstants.apiKey)"
+        
+        guard let url = URL(string: urlString) else {
+            throw APIError.invalidURL
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.serverError("Provider hatası")
+        }
+        
+        let decodedResponse = try JSONDecoder().decode(ProviderResponse.self, from: data)
+        
+        
+        //Biz sadece Türkiye verisine odaklanıyoruz.
+        
+        if let trData = decodedResponse.results?["TR"] {
+            //Hem abonelik (flatrate) hem kiralama (rent) seçeneklerini birleştirebiliriz.
+            //Ama şimdilik sadece abonelikleri döndürecez.
+            
+            return (trData.flatrate ?? [], trData.link)
+        }
+        
+        return ([], nil) // Türkiye'de yoksa boş dön
+    }
+    
+    func searchMulti(query: String) async throws -> [Media] {
+        //Türkçe karakterleri URL formatına çevir
+        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+            throw APIError.invalidURL
+        }
+        
+        let urlString = "\(APIConstants.baseURL)/search/multi?api_key=\(APIConstants.apiKey)&language=tr-TR&query=\(encodedQuery)"
+        
+        
+        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.serverError("Arama hatası")
+        }
+        
+        let decodedResponse = try JSONDecoder().decode(MovieResponse.self, from: data)
+        return decodedResponse.results
+        
+    }
+    
+    
+    func fetchMediaDetail(id: Int, mediaType: String) async throws -> MediaDetail {
+        let urlString = "\(APIConstants.baseURL)/\(mediaType)/\(id)?api_key=\(APIConstants.apiKey)&language=tr-TR"
+        
+        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.serverError("Detay çekilemedi")
+        }
+        
+        return try JSONDecoder().decode(MediaDetail.self, from: data)
+    }
+    
+    func fetchRecommendations(for mediaID: Int, mediaType: String) async throws -> [Media] {
+        let urlString = "\(APIConstants.baseURL)/\(mediaType)/\(mediaID)/recommendations?api_key=\(APIConstants.apiKey)&language=tr-TR"
+        
+        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.serverError("Öneriler getirilemedi")
+        }
+        
+        let decodedResponse = try JSONDecoder().decode(MovieResponse.self, from: data)
+        return decodedResponse.results
+    }
 }
 
 // TMDB'den gelen ana cevabı karşılamak için yardımcı struct

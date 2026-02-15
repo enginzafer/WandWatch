@@ -6,12 +6,25 @@
 //
 
 import SwiftUI
+import SwiftData
+import GoogleMobileAds
 
 @main
 struct WandWatchApp: App {
+    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+    
+    init() {
+        MobileAds.shared.start(completionHandler: nil)
+    }
+    
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            if hasCompletedOnboarding {
+                MainTabView()
+            } else {
+                OnboardingView()
+            }
         }
+        .modelContainer(for: SavedMedia.self) // Veritabanı konteynerini tanıt
     }
 }

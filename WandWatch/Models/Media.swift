@@ -55,6 +55,10 @@ struct Media: Identifiable, Codable {
         return URL(string: "https://image.tmdb.org/t/p/w500\(path)")
     }
     
+    var shareURL: URL {
+        let type = mediaType?.rawValue ?? "movie"
+        return URL(string: "https://www.themoviedb.org/\(type)/\(id)")!
+    }
     
     enum CodingKeys: String, CodingKey {
         case id, title, name, overview, platform
@@ -77,6 +81,6 @@ extension Media {
         voteAverage: 8.8,
         releaseDate: "2010-07-16",
         firstAirDate: nil,
-        platform: ["Netflix","Appple TV"]
+        platform: ["Netflix","Apple TV"]
     )
 }
